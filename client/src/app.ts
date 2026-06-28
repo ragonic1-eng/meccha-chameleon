@@ -9,6 +9,7 @@ import { Controls } from "./controls";
 import { Avatars, type AvatarData } from "./avatars";
 import { Painter } from "./painter";
 import { MapLoader } from "./maploader";
+import { Audio } from "./audio";
 import { resolveMovement } from "@shared/classroom";
 import { LandingScreen, LobbyScreen, GameBar, ActionBar, PaintPalette, type StateView, type PlayerView } from "./ui";
 
@@ -74,6 +75,8 @@ export class App {
   private painter: Painter;
   private palette: PaintPalette;
   private camoMode = false;
+  private audio = new Audio();
+  private ripples: { mesh: THREE.Mesh; t: number }[] = [];
   private room?: Room;
   private myId = "";
 
@@ -104,6 +107,7 @@ export class App {
         this.palette.setColor(hex);
         this.palette.setEyedropper(false);
       },
+      setOverlay: (o) => this.scene.setOverlay(o),
     });
     this.palette = new PaintPalette({
       onColor: (hex) => (this.painter.brush.color = hex),
@@ -146,7 +150,10 @@ export class App {
       onTag: () => this.net.send(C2S.Tag),
       onPose: (p) => this.net.send(C2S.SetPose, p),
       onCamo: () => this.toggleCamo(),
+      onWhistle: () => this.whistle(),
     });
+    // unlock audio on the first touch (browser autoplay policy)
+    window.addEventListener("pointerdown", () => this.audio.unlock(), { once: true });
 
     const app = document.getElementById("app")!;
     app.append(this.landing.root, this.lobby.root, this.gamebar.root);
@@ -204,6 +211,7 @@ export class App {
     });
     room.onMessage(S2C.PaintStroke, (s: any) => this.avatars.applyStroke(s.id, s));
     room.onMessage(S2C.PaintClear, (m: { id: string }) => this.avatars.clearPaint(m.id));
+    room.onMessage(S2C.Whistle, (m: { id: string; x: number; z: number }) => this.onWhistle(m));
     // pull any camouflage painted before we tuned in (late join / reconnect)
     this.net.send(C2S.PaintSync);
     this.render();
@@ -244,6 +252,45 @@ export class App {
     this.controls.setEnabled(canAct);
 
     this.avatars.sync(toAvatars(this.room.state), this.myId);
+  }
+
+  private whistle() {
+    this.audio.whistle(1);
+    this.net.send(C2S.Whistle);
+    this.spawnRipple(this.pos.x, this.pos.z);
+  }
+
+  private onWhistle(m: { x: number; z: number }) {
+    const d = Math.hypot(this.pos.x - m.x, this.pos.z - m.z);
+    this.audio.whistle(Math.max(0.05, Math.min(1, 1 - d / 18)));
+    this.spawnRipple(m.x, m.z);
+  }
+
+  private spawnRipple(x: number, z: number) {
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(0.18, 0.28, 28),
+      new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false })
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.set(x, 0.08, z);
+    this.scene.scene.add(ring);
+    this.ripples.push({ mesh: ring, t: 0 });
+  }
+
+  private updateRipples(dt: number) {
+    for (let i = this.ripples.length - 1; i >= 0; i--) {
+      const r = this.ripples[i];
+      r.t += dt;
+      const k = r.t / 1.1;
+      r.mesh.scale.setScalar(1 + k * 9);
+      (r.mesh.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 0.85 * (1 - k));
+      if (r.t >= 1.1) {
+        this.scene.scene.remove(r.mesh);
+        r.mesh.geometry.dispose();
+        (r.mesh.material as THREE.Material).dispose();
+        this.ripples.splice(i, 1);
+      }
+    }
   }
 
   private toggleCamo() {
@@ -290,6 +337,7 @@ export class App {
   }
 
   private onFrame(dt: number) {
+    this.updateRipples(dt);
     if (this.camoMode) {
       this.avatars.update(dt);
       this.painter.update();

@@ -1,4 +1,4 @@
-import type { GameMode } from "@shared/types";
+import { POSES, POSE_LABELS, type GameMode } from "@shared/types";
 
 // ---- lightweight read-only views of the synced state ----
 export interface PlayerView {
@@ -244,29 +244,28 @@ export class GameBar {
 }
 
 // ============================ Action bar (in-match) ============================
-const POSES = ["stand", "crouch", "curl", "lie", "flatten"] as const;
-
 export class ActionBar {
   root = el("div", "actionbar");
   private tagBtn = el("button", "tag-btn", "TAG");
-  private poseBar = el("div", "pose-bar");
+  private poseTray = el("div", "pose-tray");
   private poseBtns = new Map<string, HTMLButtonElement>();
   private caught = el("div", "caught-overlay", "Caught! Spectating…");
-
   private camoBtn = el("button", "btn secondary camo-toggle", "🎨 Camouflage");
+  private whistleBtn = el("button", "whistle-btn", "📣");
 
-  constructor(cb: { onTag: () => void; onPose: (p: string) => void; onCamo: () => void }) {
+  constructor(cb: { onTag: () => void; onPose: (p: string) => void; onCamo: () => void; onWhistle: () => void }) {
     this.tagBtn.onclick = () => cb.onTag();
     this.camoBtn.onclick = () => cb.onCamo();
+    this.whistleBtn.onclick = () => cb.onWhistle();
     POSES.forEach((p) => {
-      const b = el("button", "pose-btn", p);
+      const b = el("button", "pose-btn", POSE_LABELS[p]);
       b.onclick = () => cb.onPose(p);
       this.poseBtns.set(p, b);
-      this.poseBar.append(b);
+      this.poseTray.append(b);
     });
     const left = el("div", "ab-left");
-    left.append(this.poseBar, this.camoBtn);
-    this.root.append(left, this.tagBtn);
+    left.append(this.poseTray, this.camoBtn);
+    this.root.append(left, this.whistleBtn, this.tagBtn);
     document.body.append(this.root, this.caught);
     this.caught.style.display = "none";
     this.root.style.display = "none";
@@ -280,10 +279,14 @@ export class ActionBar {
     this.tagBtn.style.display = showTag ? "" : "none";
 
     const isHiderPrep = role === "hider" && phase === "prep" && alive;
-    this.poseBar.style.display = isHiderPrep ? "" : "none";
+    // poses live in the camouflage self-view (where you can see the figure strike them)
+    this.poseTray.style.display = isHiderPrep && camoActive ? "" : "none";
     this.poseBtns.forEach((b, p) => b.classList.toggle("active", p === pose));
     this.camoBtn.style.display = isHiderPrep ? "" : "none";
     this.camoBtn.textContent = camoActive ? "🚶 Move" : "🎨 Camouflage";
+
+    // anyone alive in a match can whistle to attract passing players
+    this.whistleBtn.style.display = inMatch && alive ? "" : "none";
 
     this.caught.style.display = inMatch && !alive ? "" : "none";
   }

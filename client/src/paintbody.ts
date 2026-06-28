@@ -1,62 +1,51 @@
 import * as THREE from "three";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { PaintStroke } from "@shared/types";
 
-const TEX = 512;
-const BASE_COLOR = "#e9ece6"; // plain white-ish chameleon base
+const TEX = 1024;
+const BASE_COLOR = "#e9ece6";
+const ATLAS = 4; // 4x4 UV atlas so each body part paints into its own region
+const CELL = 1 / ATLAS;
+const D = Math.PI / 180;
 
-/**
- * A stylised chameleon merged into ONE geometry (body, head, eye turrets, snout, dorsal
- * crest, curled tail, four legs). Single mesh + single UV set = the whole silhouette is
- * paintable, so camouflage covers every part. Primitive UVs overlap, which only makes the
- * camo pattern repeat across parts — fine for blending.
- */
-function buildChameleonGeometry(): THREE.BufferGeometry {
-  const parts: THREE.BufferGeometry[] = [];
-  const T = (x: number, y: number, z: number) => new THREE.Matrix4().makeTranslation(x, y, z);
-  const add = (g: THREE.BufferGeometry, m: THREE.Matrix4) => {
-    g.applyMatrix4(m);
-    parts.push(g.toNonIndexed());
-  };
-
-  // body
-  add(new THREE.CapsuleGeometry(0.24, 0.4, 8, 18), T(0, 0, 0));
-  // head + snout
-  add(new THREE.SphereGeometry(0.19, 18, 14), T(0, 0.42, 0.08));
-  add(new THREE.ConeGeometry(0.1, 0.2, 14).applyMatrix4(new THREE.Matrix4().makeRotationX(Math.PI / 2)), T(0, 0.4, 0.28));
-  // eye turrets
-  add(new THREE.SphereGeometry(0.1, 12, 10), T(0.15, 0.5, 0.07));
-  add(new THREE.SphereGeometry(0.1, 12, 10), T(-0.15, 0.5, 0.07));
-  // dorsal crest
-  for (let i = 0; i < 5; i++) add(new THREE.ConeGeometry(0.05, 0.13, 8), T(0, 0.52 - i * 0.17, -0.12));
-  // curled tail
-  add(
-    new THREE.TorusGeometry(0.16, 0.06, 8, 18, Math.PI * 1.4).applyMatrix4(new THREE.Matrix4().makeRotationY(Math.PI / 2)),
-    T(0, -0.42, -0.14)
-  );
-  // four legs (splayed)
-  for (const [x, z] of [
-    [0.2, 0.13],
-    [-0.2, 0.13],
-    [0.2, -0.13],
-    [-0.2, -0.13],
-  ] as const) {
-    const leg = new THREE.CapsuleGeometry(0.05, 0.2, 4, 8).applyMatrix4(new THREE.Matrix4().makeRotationZ(x > 0 ? -0.5 : 0.5));
-    add(leg, T(x, -0.24, z));
-  }
-
-  return mergeGeometries(parts, false)!;
+interface PoseDef {
+  j?: Record<string, [number, number, number]>; // joint euler degrees
+  rootRot?: [number, number, number];
+  rootY?: number;
 }
 
+// Joint angles for the white-figure poses (calibrated to read at a glance).
+const PRESETS: Record<string, PoseDef> = {
+  stand: { j: { shR: [0, 0, 6], shL: [0, 0, -6] } },
+  run: {
+    j: { spine: [16, 0, 0], shR: [-45, 0, 8], elR: [-35, 0, 0], shL: [42, 0, -8], hpR: [38, 0, 0], knR: [-45, 0, 0], hpL: [-32, 0, 0], knL: [-20, 0, 0] },
+  },
+  point: { j: { shR: [0, 0, -92], shL: [0, 0, -8] } },
+  pointup: { j: { shR: [-150, 0, -18], shL: [0, 0, -8] } },
+  wave: { j: { shR: [0, 0, -150], elR: [-45, 0, 0], shL: [0, 0, -6] } },
+  think: { j: { spine: [14, 0, 0], shR: [-95, 0, 14], elR: [-115, 0, 0], shL: [-20, 0, -10] } },
+  cheer: { j: { shR: [-168, 0, -22], shL: [-168, 0, 22] } },
+  lean: { j: { spine: [26, 0, 12], shR: [0, 0, -92], hpL: [-8, 0, 0] } },
+  bow: { j: { spine: [74, 0, 0], shR: [14, 0, 6], shL: [14, 0, -6] } },
+  panic: { j: { shR: [-150, 0, -28], elR: [-105, 0, 0], shL: [-150, 0, 28], elL: [-105, 0, 0] } },
+  wide: { j: { shR: [0, 0, -96], shL: [0, 0, 96] } },
+  lie: { rootRot: [-88 * D, 0, 0], rootY: 0.18, j: { shR: [0, 0, 18], shL: [0, 0, -18] } },
+  sit: {
+    rootY: -0.12,
+    j: { spine: [40, 0, 0], hpR: [96, 0, 0], knR: [-125, 0, 0], hpL: [96, 0, 0], knL: [-125, 0, 0], shR: [-46, 0, 12], elR: [-95, 0, 0], shL: [-46, 0, -12], elL: [-95, 0, 0] },
+  },
+};
+
 /**
- * A chameleon body whose skin is a paintable canvas texture. Shared by the local
- * player (self-view painting) and every remote avatar (replays incoming strokes),
- * so local and remote renders stay pixel-identical.
+ * Posable white humanoid avatar whose skin is a paintable canvas (UV-atlased so each limb
+ * paints independently). One mesh-set, shared material — local self-view and remote avatars
+ * render identically. Replaces the earlier blob to match Meccha Chameleon's figure poses.
  */
 export class PaintBody {
   readonly group = new THREE.Group();
-  readonly mesh: THREE.Mesh;
+  readonly figure = new THREE.Group();
+  readonly parts: THREE.Mesh[] = [];
   readonly mat: THREE.MeshStandardMaterial;
+  private joints: Record<string, THREE.Group> = {};
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private texture: THREE.CanvasTexture;
@@ -70,22 +59,71 @@ export class PaintBody {
     this.texture = new THREE.CanvasTexture(this.canvas);
     this.texture.colorSpace = THREE.SRGBColorSpace;
     this.texture.anisotropy = 4;
-    this.mat = new THREE.MeshStandardMaterial({ map: this.texture, roughness: 0.78, metalness: 0.0 });
+    this.mat = new THREE.MeshStandardMaterial({ map: this.texture, roughness: 0.82, metalness: 0 });
 
-    this.mesh = new THREE.Mesh(buildChameleonGeometry(), this.mat);
-    this.mesh.castShadow = true;
-    this.mesh.position.y = 0.65;
-    this.group.add(this.mesh);
+    this.build();
+    this.group.add(this.figure);
+    this.setPose("stand");
+  }
 
-    // tiny dark pupils for character (eyes; minimal camo impact)
-    const pupilMat = new THREE.MeshStandardMaterial({ color: 0x14110d, roughness: 0.4 });
-    for (const x of [0.15, -0.15]) {
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), pupilMat);
-      pupil.position.set(x, 0.5, 0.15);
-      this.mesh.add(pupil);
+  private remap(geo: THREE.BufferGeometry, cell: number) {
+    const cx = (cell % ATLAS) * CELL;
+    const cy = Math.floor(cell / ATLAS) * CELL;
+    const uv = geo.attributes.uv as THREE.BufferAttribute;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, cx + uv.getX(i) * CELL, cy + uv.getY(i) * CELL);
+    uv.needsUpdate = true;
+  }
+
+  private build() {
+    let cell = 0;
+    const cap = (r: number, len: number) => new THREE.CapsuleGeometry(r, len, 5, 12);
+    const mk = (geo: THREE.BufferGeometry, parent: THREE.Object3D, y: number) => {
+      this.remap(geo, cell++);
+      const m = new THREE.Mesh(geo, this.mat);
+      m.castShadow = true;
+      m.position.y = y;
+      parent.add(m);
+      this.parts.push(m);
+      return m;
+    };
+    const joint = (parent: THREE.Object3D, name: string, x: number, y: number) => {
+      const g = new THREE.Group();
+      g.position.set(x, y, 0);
+      parent.add(g);
+      this.joints[name] = g;
+      return g;
+    };
+
+    const hips = joint(this.figure, "hips", 0, 0.5);
+    const spine = joint(hips, "spine", 0, 0);
+    mk(cap(0.14, 0.22), spine, 0.21); // torso
+    mk(new THREE.SphereGeometry(0.145, 16, 14), spine, 0.5); // head
+
+    for (const sgn of [1, -1] as const) {
+      const s = sgn > 0 ? "R" : "L";
+      const sh = joint(spine, "sh" + s, 0.17 * sgn, 0.4);
+      mk(cap(0.052, 0.16), sh, -0.11); // upper arm
+      const el = joint(sh, "el" + s, 0, -0.22);
+      mk(cap(0.048, 0.15), el, -0.1); // lower arm
+    }
+    for (const sgn of [1, -1] as const) {
+      const s = sgn > 0 ? "R" : "L";
+      const hp = joint(hips, "hp" + s, 0.08 * sgn, 0);
+      mk(cap(0.07, 0.16), hp, -0.12); // upper leg
+      const kn = joint(hp, "kn" + s, 0, -0.24);
+      mk(cap(0.064, 0.14), kn, -0.1); // lower leg
     }
   }
 
+  setPose(name: string) {
+    const p = PRESETS[name] || PRESETS.stand;
+    for (const k in this.joints) this.joints[k].rotation.set(0, 0, 0);
+    if (p.j) for (const k in p.j) { const a = p.j[k]; this.joints[k]?.rotation.set(a[0] * D, a[1] * D, a[2] * D); }
+    this.figure.rotation.set(...(p.rootRot ?? [0, 0, 0]));
+    this.figure.position.y = p.rootY ?? 0;
+  }
+
+  // ---- painting (operates on the shared atlas canvas in UV space) ----
   clear() {
     this.ctx.globalAlpha = 1;
     this.ctx.fillStyle = BASE_COLOR;
@@ -93,14 +131,13 @@ export class PaintBody {
     if (this.texture) this.texture.needsUpdate = true;
   }
 
-  /** One soft brush dab at UV (0..1). */
   private dab(u: number, v: number, color: string, radius: number, alpha: number) {
     const x = u * TEX;
     const y = (1 - v) * TEX;
     const r = Math.max(2, radius * TEX);
-    const g = this.ctx.createRadialGradient(x, y, 0, x, y, r);
     const c = new THREE.Color(color);
     const hex = `${Math.round(c.r * 255)},${Math.round(c.g * 255)},${Math.round(c.b * 255)}`;
+    const g = this.ctx.createRadialGradient(x, y, 0, x, y, r);
     g.addColorStop(0, `rgba(${hex},${alpha})`);
     g.addColorStop(0.7, `rgba(${hex},${alpha * 0.7})`);
     g.addColorStop(1, `rgba(${hex},0)`);
@@ -110,59 +147,19 @@ export class PaintBody {
     this.ctx.fill();
   }
 
-  /** Paint dabs interpolated between two UV points for a continuous line. */
   segment(u0: number, v0: number, u1: number, v1: number, color: string, radius: number, alpha: number) {
-    const du = u1 - u0;
-    const dv = v1 - v0;
-    const len = Math.hypot(du, dv);
-    const step = Math.max(0.004, radius * 0.4);
-    const n = Math.max(1, Math.ceil(len / step));
-    for (let i = 0; i <= n; i++) {
-      const t = i / n;
-      this.dab(u0 + du * t, v0 + dv * t, color, radius, alpha);
-    }
+    const len = Math.hypot(u1 - u0, v1 - v0);
+    const n = Math.max(1, Math.ceil(len / Math.max(0.004, radius * 0.4)));
+    for (let i = 0; i <= n; i++) this.dab(u0 + (u1 - u0) * (i / n), v0 + (v1 - v0) * (i / n), color, radius, alpha);
     this.texture.needsUpdate = true;
   }
 
-  /** Replay a whole stroke (used for remote players and resync). */
   applyStroke(s: PaintStroke) {
     const p = s.pts;
     if (p.length < 2) return;
-    if (p.length === 2) {
-      this.dab(p[0], p[1], s.color, s.radius, s.alpha);
-    } else {
-      for (let i = 0; i < p.length - 2; i += 2) {
-        this.segment(p[i], p[i + 1], p[i + 2], p[i + 3], s.color, s.radius, s.alpha);
-      }
-    }
+    if (p.length === 2) this.dab(p[0], p[1], s.color, s.radius, s.alpha);
+    else for (let i = 0; i < p.length - 2; i += 2) this.segment(p[i], p[i + 1], p[i + 2], p[i + 3], s.color, s.radius, s.alpha);
     this.texture.needsUpdate = true;
-  }
-
-  setPose(pose: string) {
-    const b = this.mesh;
-    b.rotation.set(0, 0, 0);
-    switch (pose) {
-      case "crouch":
-        b.scale.set(1.05, 0.65, 1.05);
-        b.position.y = 0.5;
-        break;
-      case "curl":
-        b.scale.set(1.2, 0.75, 1.2);
-        b.position.y = 0.46;
-        break;
-      case "lie":
-        b.rotation.x = Math.PI / 2;
-        b.scale.set(1, 1, 1);
-        b.position.y = 0.32;
-        break;
-      case "flatten":
-        b.scale.set(1.3, 1.1, 0.4);
-        b.position.y = 0.65;
-        break;
-      default:
-        b.scale.set(1, 1, 1);
-        b.position.y = 0.65;
-    }
   }
 
   setOpacity(o: number) {
@@ -170,15 +167,8 @@ export class PaintBody {
     this.mat.opacity = o;
   }
 
-  /** draw over scene geometry — used for the local self-view so furniture can't hide you */
-  renderOnTop() {
-    this.mat.depthTest = false;
-    this.mat.depthWrite = false;
-    this.mesh.renderOrder = 999;
-  }
-
   dispose() {
-    this.mesh.geometry.dispose();
+    for (const m of this.parts) m.geometry.dispose();
     this.mat.dispose();
     this.texture.dispose();
   }

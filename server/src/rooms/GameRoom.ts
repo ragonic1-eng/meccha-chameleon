@@ -3,6 +3,7 @@ import { GameState, PlayerState } from "./schema/GameState";
 import {
   C2S,
   S2C,
+  POSES,
   MAX_PLAYERS,
   TIMINGS,
   type GameMode,
@@ -95,7 +96,15 @@ export class GameRoom extends Room<GameState> {
     this.onMessage(C2S.SetPose, (client, pose: string) => {
       const p = this.state.players.get(client.sessionId);
       if (!p || p.role !== "hider") return;
-      if (["stand", "crouch", "curl", "lie", "flatten"].includes(pose)) p.pose = pose;
+      if ((POSES as readonly string[]).includes(pose)) p.pose = pose;
+    });
+
+    // Whistle to attract passing players — relayed to everyone else with the whistler's spot.
+    this.onMessage(C2S.Whistle, (client) => {
+      const p = this.state.players.get(client.sessionId);
+      if (!p || !p.alive) return;
+      if (this.state.phase !== "prep" && this.state.phase !== "hunt") return;
+      this.broadcast(S2C.Whistle, { id: p.id, x: p.x, z: p.z }, { except: client });
     });
 
     // Camouflage painting: hiders paint during prep; strokes are relayed + stored.

@@ -15,6 +15,10 @@ export class GameScene {
   private mapGroup?: THREE.Group;
   private sun!: THREE.DirectionalLight;
   private hemi!: THREE.HemisphereLight;
+  // a second scene drawn on top (depth cleared) for the camouflage self-view figure,
+  // so furniture never occludes it while self-occlusion stays correct
+  private overlay = new THREE.Scene();
+  private overlayObj?: THREE.Object3D;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
@@ -27,8 +31,20 @@ export class GameScene {
     this.camera.lookAt(0, 1, 0);
 
     this.buildPlaceholderRoom();
+    this.overlay.add(new THREE.HemisphereLight(0xffffff, 0x556055, 1.15));
+    const od = new THREE.DirectionalLight(0xfff2d6, 1.0);
+    od.position.set(2, 4, 3);
+    this.overlay.add(od);
+
     this.resize();
     window.addEventListener("resize", () => this.resize());
+  }
+
+  /** Object rendered on top of the world (depth-cleared) — used for the paint self-view. */
+  setOverlay(obj: THREE.Object3D | null) {
+    if (this.overlayObj) this.overlay.remove(this.overlayObj);
+    this.overlayObj = obj ?? undefined;
+    if (obj) this.overlay.add(obj);
   }
 
   /** Room dimensions roughly match the asset's classroom01_8x10x3.5m shell. */
@@ -130,6 +146,12 @@ export class GameScene {
       const dt = this.clock.getDelta();
       this.onFrame?.(dt);
       this.renderer.render(this.scene, this.camera);
+      if (this.overlayObj) {
+        this.renderer.autoClear = false;
+        this.renderer.clearDepth();
+        this.renderer.render(this.overlay, this.camera);
+        this.renderer.autoClear = true;
+      }
     };
     loop();
   }

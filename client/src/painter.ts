@@ -7,6 +7,7 @@ const MAX_STROKE_PTS = 48; // flush long strokes so remotes update mid-drag
 interface PainterOpts {
   onStroke: (s: PaintStroke) => void;
   onSample: (color: string) => void;
+  setOverlay: (obj: THREE.Object3D | null) => void;
 }
 
 /** Local hider's camouflage tool: self-view orbit + raycast brush + eyedropper. */
@@ -17,8 +18,8 @@ export class Painter {
   active = false;
 
   private orbitYaw = 0;
-  private orbitPitch = 0.12;
-  private radius = 2.4;
+  private orbitPitch = 0.22;
+  private radius = 2.1;
   private center = new THREE.Vector3();
   private lookT = new THREE.Vector3();
 
@@ -36,26 +37,24 @@ export class Painter {
     private camera: THREE.PerspectiveCamera,
     private scene: THREE.Scene,
     private opts: PainterOpts
-  ) {
-    this.body.renderOnTop(); // self-view body is never hidden by furniture
-  }
+  ) {}
 
   setActive(v: boolean, center?: THREE.Vector3) {
     if (v === this.active) {
-      if (v && center) this.center.copy(center).add(new THREE.Vector3(0, 0.6, 0));
+      if (v && center) this.center.copy(center).add(new THREE.Vector3(0, 0.65, 0));
       return;
     }
     this.active = v;
     if (v) {
-      if (center) this.center.copy(center).add(new THREE.Vector3(0, 0.6, 0));
+      if (center) this.center.copy(center).add(new THREE.Vector3(0, 0.65, 0));
       this.body.group.position.copy(this.center).setY(0);
-      this.scene.add(this.body.group);
+      this.opts.setOverlay(this.body.group);
       this.canvas.addEventListener("pointerdown", this.onDown);
       this.canvas.addEventListener("pointermove", this.onMove);
       this.canvas.addEventListener("pointerup", this.onUp);
       this.canvas.addEventListener("pointercancel", this.onUp);
     } else {
-      this.scene.remove(this.body.group);
+      this.opts.setOverlay(null);
       this.canvas.removeEventListener("pointerdown", this.onDown);
       this.canvas.removeEventListener("pointermove", this.onMove);
       this.canvas.removeEventListener("pointerup", this.onUp);
@@ -82,7 +81,7 @@ export class Painter {
     const z = this.center.z + this.radius * Math.cos(cp) * Math.cos(this.orbitYaw);
     this.camera.position.set(x, y, z);
     // look below the body so it frames in the upper half, clear of the bottom palette
-    this.lookT.copy(this.center).setY(this.center.y - 0.7);
+    this.lookT.copy(this.center).setY(this.center.y - 0.45);
     this.camera.lookAt(this.lookT);
   }
 
@@ -93,7 +92,7 @@ export class Painter {
 
   private hitBody(): THREE.Intersection | null {
     this.ray.setFromCamera(this.ndc, this.camera);
-    const hits = this.ray.intersectObject(this.body.mesh, false);
+    const hits = this.ray.intersectObjects(this.body.parts, false);
     return hits[0] ?? null;
   }
 

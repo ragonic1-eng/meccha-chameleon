@@ -3,7 +3,40 @@
 export type Phase = "lobby" | "prep" | "hunt" | "results";
 export type Role = "unassigned" | "seeker" | "hider";
 export type GameMode = "normal" | "infection" | "double";
-export type Pose = "stand" | "crouch" | "curl" | "lie" | "flatten";
+
+/** The avatar poses (white-figure poses from Meccha Chameleon). */
+export const POSES = [
+  "stand",
+  "run",
+  "point",
+  "pointup",
+  "wave",
+  "think",
+  "cheer",
+  "lean",
+  "bow",
+  "panic",
+  "wide",
+  "lie",
+  "sit",
+] as const;
+export type Pose = (typeof POSES)[number];
+/** Friendly labels for the pose tray UI. */
+export const POSE_LABELS: Record<Pose, string> = {
+  stand: "Stand",
+  run: "Run",
+  point: "Point",
+  pointup: "Point up",
+  wave: "Wave",
+  think: "Think",
+  cheer: "Cheer",
+  lean: "Lean",
+  bow: "Bow",
+  panic: "Panic",
+  wide: "Arms wide",
+  lie: "Lie down",
+  sit: "Curl up",
+};
 
 export const DEFAULT_PORT = 2567;
 export const MAX_PLAYERS = 6;
@@ -29,6 +62,7 @@ export const C2S = {
   PaintClear: "c:paintClear",
   PaintSync: "c:paintSync",
   SetPose: "c:pose",
+  Whistle: "c:whistle",
 } as const;
 
 /** Server -> Client message types. */
@@ -39,6 +73,7 @@ export const S2C = {
   Tagged: "s:tagged",
   Eliminated: "s:eliminated",
   GameOver: "s:gameover",
+  Whistle: "s:whistle",
   Error: "s:error",
 } as const;
 

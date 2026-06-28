@@ -349,8 +349,36 @@ body {
   pointer-events: none;
 }
 
-.ab-left { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.ab-left { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; flex: 1; min-width: 0; }
 .camo-toggle { padding: 11px 16px; font-size: 14px; }
+
+/* scrollable pose tray (13 poses) */
+.pose-tray {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  max-width: min(72vw, 380px);
+  padding: 2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.pose-tray::-webkit-scrollbar { display: none; }
+.pose-tray .pose-btn { flex: 0 0 auto; }
+
+/* whistle button */
+.whistle-btn {
+  flex: 0 0 auto;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  font-size: 26px;
+  color: #2a1e06;
+  background: radial-gradient(circle at 35% 30%, #ffe49a, #f0b53c);
+  box-shadow: 0 6px 18px rgba(240, 181, 60, 0.45);
+  align-self: flex-end;
+}
+.whistle-btn:active { transform: scale(0.92); }
 
 /* when painting, lift pose buttons + Move toggle above the bottom palette */
 body.camo-mode .actionbar {
