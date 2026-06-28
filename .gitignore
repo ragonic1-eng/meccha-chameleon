@@ -7,3 +7,5 @@ dist/
 # keep the converted map assets (client/public/maps/**) — needed for deploy
 tools/_work/
 tools/_extracted/
+
+.vercel

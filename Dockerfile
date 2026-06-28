@@ -4,9 +4,9 @@ FROM node:20-slim
 WORKDIR /app
 COPY . .
 
-# --omit=optional skips the local-only asset pipeline tools (fbx2gltf, sharp);
-# the converted map assets are already committed under client/public/maps.
-RUN npm install --omit=optional && npm run build
+# The converted map assets are already committed under client/public/maps,
+# so the build doesn't need the local-only asset pipeline tools.
+RUN npm install && npm run build
 
 ENV PORT=8080
 EXPOSE 8080

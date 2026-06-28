@@ -36,7 +36,7 @@ npm start            # server serves client/dist + Colyseus on $PORT (default 25
 ### Deploy to Railway (easiest)
 1. Push this repo to GitHub.
 2. railway.com → **New Project → Deploy from GitHub repo** → pick it.
-3. Set **Build**: `npm install --omit=optional && npm run build`, **Start**: `npm start`.
+3. Set **Build**: `npm install && npm run build`, **Start**: `npm start`.
 4. Railway injects `PORT`; the server already reads it. Open the generated URL on any phone.
 
 ### Deploy to Render

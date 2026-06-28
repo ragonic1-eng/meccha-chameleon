@@ -5,7 +5,7 @@ services:
     name: meccha-chameleon
     runtime: node
     plan: free
-    buildCommand: npm install --omit=optional && npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /health
     envVars:
