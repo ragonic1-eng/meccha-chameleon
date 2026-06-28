@@ -10,15 +10,12 @@ import {
   type MoveInput,
   type PaintStroke,
 } from "@shared/types";
+import { SPAWNS, resolveMovement } from "@shared/classroom";
 import { generateCode, registerCode, releaseCode } from "./codes";
 
-// Room bounds (matches the 8x10m placeholder/classroom shell, with a margin from walls).
-const BOUND_X = 3.7;
-const BOUND_Z = 4.7;
 const TAG_RANGE = 1.7; // metres
 const TAG_CONE = 1.1; // radians half-angle the seeker must be facing within
 
-const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);
 function angleDiff(a: number, b: number) {
   let d = a - b;
   while (d > Math.PI) d -= Math.PI * 2;
@@ -35,17 +32,6 @@ interface Spawn {
   z: number;
   ry: number;
 }
-
-// Placeholder spawn points (refined with the real classroom map in Phase 4).
-const SEEKER_SPAWN: Spawn = { x: 0, z: 4, ry: Math.PI };
-const HIDER_SPAWNS: Spawn[] = [
-  { x: -2.4, z: -3.2, ry: 0 },
-  { x: 2.4, z: -3.2, ry: 0 },
-  { x: -3.2, z: 0, ry: Math.PI / 2 },
-  { x: 3.2, z: 0, ry: -Math.PI / 2 },
-  { x: -2.4, z: 2.4, ry: 0 },
-  { x: 2.4, z: 2.4, ry: 0 },
-];
 
 export class GameRoom extends Room<GameState> {
   maxClients = MAX_PLAYERS;
@@ -100,8 +86,9 @@ export class GameRoom extends Room<GameState> {
       // seekers are frozen at spawn during prep
       if (p.role === "seeker" && this.state.phase === "prep") return;
       if (!Number.isFinite(m.x) || !Number.isFinite(m.z) || !Number.isFinite(m.ry)) return;
-      p.x = clamp(m.x, -BOUND_X, BOUND_X);
-      p.z = clamp(m.z, -BOUND_Z, BOUND_Z);
+      const [rx, rz] = resolveMovement(m.x, m.z);
+      p.x = rx;
+      p.z = rz;
       p.ry = m.ry;
     });
 
@@ -220,10 +207,10 @@ export class GameRoom extends Room<GameState> {
       p.pose = "stand";
       if (i === seekerIdx) {
         p.role = "seeker";
-        this.applySpawn(p, SEEKER_SPAWN);
+        this.applySpawn(p, SPAWNS.seeker);
       } else {
         p.role = "hider";
-        this.applySpawn(p, HIDER_SPAWNS[hi % HIDER_SPAWNS.length]);
+        this.applySpawn(p, SPAWNS.hiders[hi % SPAWNS.hiders.length]);
         hi++;
       }
     });

@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { PROPS, ROOM, SPAWNS } from "@shared/classroom";
 
 const BASE = "maps/classroom";
 
@@ -99,55 +100,19 @@ export class MapLoader {
 
     const ssize = new THREE.Vector3();
     sb.getSize(ssize);
-    const halfX = ssize.x / 2; // ~4
-    const halfZ = ssize.z / 2; // ~5
-    console.log(`[map] room halfX=${halfX.toFixed(2)} halfZ=${halfZ.toFixed(2)}`);
-    const boardWallZ = -halfZ + 0.05;
+    console.log(`[map] room halfX=${(ssize.x / 2).toFixed(2)} halfZ=${(ssize.z / 2).toFixed(2)}`);
 
-    // front wall: blackboard + long board, teacher's platform
-    place(loaded.get("blackboard01_1")!, 0, boardWallZ, 0);
-    if (loaded.has("board01_long")) place(loaded.get("board01_long")!, -2.6, boardWallZ, 0);
-    if (loaded.has("clock01")) place(loaded.get("clock01")!, 2.9, boardWallZ + 0.1, 0);
-    place(loaded.get("platform01")!, 0, -halfZ + 1.4, 0, 1.2);
-
-    // desk + chair grid facing the board
-    const desk = loaded.get("desk01")!;
-    const chair = loaded.get("chair01")!;
-    const cols = [-2.6, -1.3, 0, 1.3, 2.6];
-    const rows = [-1.2, 0.4, 2.0, 3.4];
-    for (const cx of cols) {
-      for (const cz of rows) {
-        place(desk, cx, cz, Math.PI);
-        place(chair, cx, cz + 0.55, 0);
-      }
+    // place every prop from the shared layout (single source of truth, also used for collision)
+    for (const p of PROPS) {
+      const proto = loaded.get(p.mesh);
+      if (!proto) continue;
+      place(proto, p.x, p.z, p.ry, p.s ?? 1);
     }
 
-    // lockers along the back wall
-    if (loaded.has("locker01_close")) {
-      for (let i = -1; i <= 1; i++) place(loaded.get("locker01_close")!, i * 1.0, halfZ - 0.4, Math.PI);
-    }
-    // door + a couple of windows on the side wall
-    if (loaded.has("door01_A")) place(loaded.get("door01_A")!, halfX - 0.1, halfZ - 1.5, -Math.PI / 2);
-    if (loaded.has("window01")) {
-      place(loaded.get("window01")!, -halfX + 0.1, -1, Math.PI / 2);
-      place(loaded.get("window01")!, -halfX + 0.1, 2, Math.PI / 2);
-    }
-
-    const margin = 0.6;
     return {
       group: root,
-      bounds: { x: halfX - margin, z: halfZ - margin },
-      spawns: {
-        seeker: { x: 0, z: halfZ - 1, ry: Math.PI },
-        hiders: [
-          { x: -halfX + 1, z: -halfZ + 2.5, ry: 0 },
-          { x: halfX - 1, z: -halfZ + 2.5, ry: 0 },
-          { x: -halfX + 1, z: 0, ry: Math.PI / 2 },
-          { x: halfX - 1, z: 0, ry: -Math.PI / 2 },
-          { x: -halfX + 1, z: halfZ - 1.5, ry: 0 },
-          { x: halfX - 1, z: halfZ - 1.5, ry: 0 },
-        ],
-      },
+      bounds: { x: ROOM.halfX, z: ROOM.halfZ },
+      spawns: SPAWNS,
     };
   }
 }

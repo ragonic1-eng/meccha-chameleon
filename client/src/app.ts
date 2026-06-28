@@ -9,12 +9,11 @@ import { Controls } from "./controls";
 import { Avatars, type AvatarData } from "./avatars";
 import { Painter } from "./painter";
 import { MapLoader } from "./maploader";
+import { resolveMovement } from "@shared/classroom";
 import { LandingScreen, LobbyScreen, GameBar, ActionBar, PaintPalette, type StateView, type PlayerView } from "./ui";
 
 const SPEED = 3.2; // m/s
 const LOOK_SENS = 0.0034;
-const BOUND_X = 3.7;
-const BOUND_Z = 4.7;
 const POSE_EYE: Record<string, number> = { stand: 1.45, crouch: 0.95, curl: 0.6, lie: 0.4, flatten: 1.25 };
 
 function toStateView(state: any): StateView {
@@ -328,8 +327,9 @@ export class App {
           rz = nfx;
         const vx = nfx * m.y + rx * m.x;
         const vz = nfz * m.y + rz * m.x;
-        this.pos.x = Math.max(-BOUND_X, Math.min(BOUND_X, this.pos.x + vx * SPEED * dt));
-        this.pos.z = Math.max(-BOUND_Z, Math.min(BOUND_Z, this.pos.z + vz * SPEED * dt));
+        const [cx, cz] = resolveMovement(this.pos.x + vx * SPEED * dt, this.pos.z + vz * SPEED * dt);
+        this.pos.x = cx;
+        this.pos.z = cz;
       }
     }
 
