@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { PROPS, ROOM, SPAWNS } from "@shared/classroom";
+import { ROOM, SPAWNS } from "@shared/classroom";
 
 const BASE = "maps/classroom";
 
@@ -10,6 +10,10 @@ interface MatEntry {
 }
 interface Manifest {
   meshes: Record<string, { file: string; materials: Record<string, MatEntry> }>;
+}
+
+interface LayoutFile {
+  props: { mesh: string; p: [number, number, number]; ry: number; s: [number, number, number] }[];
 }
 
 export interface LoadedMap {
@@ -64,55 +68,49 @@ export class MapLoader {
 
   async load(): Promise<LoadedMap> {
     const manifest: Manifest = await fetch(`${BASE}/manifest.json`).then((r) => r.json());
+    const layout: LayoutFile = await fetch(`${BASE}/layout.json`).then((r) => r.json());
     const names = Object.keys(manifest.meshes);
     const loaded = new Map<string, THREE.Group>();
     await Promise.all(names.map(async (n) => loaded.set(n, await this.loadMesh(n, manifest.meshes[n]))));
 
-    const root = new THREE.Group();
+    // mesh unit scale: make the shell's longer floor dimension ~10m
     const shell = loaded.get("classroom01_8x10x3.5m")!;
-
-    // normalize scale: fit the shell's longer floor dimension to ~10m (room is 8x10)
-    const box = new THREE.Box3().setFromObject(shell);
-    const size = new THREE.Vector3();
-    box.getSize(size);
-    const scale = 10 / Math.max(0.001, size.x, size.z);
-    console.log(`[map] shell raw size x=${size.x.toFixed(2)} y=${size.y.toFixed(2)} z=${size.z.toFixed(2)} scale=${scale.toFixed(4)}`);
-
-    const place = (proto: THREE.Group, x: number, z: number, ry = 0, s = 1) => {
-      const inst = proto.clone(true);
-      inst.scale.multiplyScalar(scale * s);
-      // recompute footprint so we can sit it on the floor
-      const b = new THREE.Box3().setFromObject(inst);
-      inst.position.set(x, -b.min.y, z);
-      inst.rotateY(ry);
-      root.add(inst);
-      return inst;
-    };
-
-    // shell: scale, orient long axis to Z, recentre on origin, floor at y=0
-    shell.scale.multiplyScalar(scale);
-    if (size.x > size.z) shell.rotateY(Math.PI / 2); // make the 10m side run along Z
-    const sb = new THREE.Box3().setFromObject(shell);
-    const sc = new THREE.Vector3();
-    sb.getCenter(sc);
-    shell.position.set(-sc.x, -sb.min.y, -sc.z);
-    root.add(shell);
-
     const ssize = new THREE.Vector3();
-    sb.getSize(ssize);
-    console.log(`[map] room halfX=${(ssize.x / 2).toFixed(2)} halfZ=${(ssize.z / 2).toFixed(2)}`);
+    new THREE.Box3().setFromObject(shell).getSize(ssize);
+    const meshScale = 10 / Math.max(0.001, ssize.x, ssize.z);
 
-    // place every prop from the shared layout (single source of truth, also used for collision)
-    for (const p of PROPS) {
-      const proto = loaded.get(p.mesh);
+    // --- Unity(LH, long axis X) -> engine(RH, long axis Z). Calibration constants: ---
+    const SX = 1; // sign for engine-X (from Unity Z)
+    const SZ = 1; // sign for engine-Z (from Unity X)
+    const RY_SIGN = 1;
+    const RY_OFF = 0;
+    const ex = (uz: number) => uz * SX;
+    const ez = (ux: number) => ux * SZ;
+
+    const root = new THREE.Group();
+    let shellInst: THREE.Object3D | null = null;
+    for (const pr of layout.props) {
+      if (pr.mesh === "classroom01_shadow") continue;
+      const proto = loaded.get(pr.mesh);
       if (!proto) continue;
-      place(proto, p.x, p.z, p.ry, p.s ?? 1);
+      const inst = proto.clone(true);
+      inst.scale.multiplyScalar(meshScale * (pr.s?.[0] ?? 1));
+      inst.position.set(ex(pr.p[2]), pr.p[1], ez(pr.p[0]));
+      inst.rotation.y = RY_SIGN * pr.ry + RY_OFF;
+      root.add(inst);
+      if (pr.mesh.startsWith("classroom01_8x10")) shellInst = inst;
     }
 
-    return {
-      group: root,
-      bounds: { x: ROOM.halfX, z: ROOM.halfZ },
-      spawns: SPAWNS,
-    };
+    // recentre on origin + drop the floor to y=0, using the shell as reference
+    if (shellInst) {
+      const b = new THREE.Box3().setFromObject(shellInst);
+      const c = new THREE.Vector3();
+      b.getCenter(c);
+      root.position.set(-c.x, -b.min.y, -c.z);
+      console.log(`[map] shell center x=${c.x.toFixed(3)} z=${c.z.toFixed(3)} floorY=${b.min.y.toFixed(3)}`);
+    }
+    console.log(`[map] exact layout: ${layout.props.length} props, meshScale=${meshScale.toFixed(3)}`);
+
+    return { group: root, bounds: { x: ROOM.halfX, z: ROOM.halfZ }, spawns: SPAWNS };
   }
 }

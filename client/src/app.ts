@@ -350,7 +350,8 @@ export class App {
     this.idleT += dt;
     const cam = this.scene.camera;
     cam.rotation.set(0, 0, 0, "YXZ");
-    cam.position.set(Math.sin(this.idleT * 0.18) * 1.3, 1.6, 4.2);
-    cam.lookAt(0, 1, -1);
+    const a = this.idleT * 0.12;
+    cam.position.set(Math.sin(a) * 3.6, 2.5, Math.cos(a) * 3.6);
+    cam.lookAt(0, 0.9, 0);
   }
 }

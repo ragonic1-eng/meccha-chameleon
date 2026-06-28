@@ -20,19 +20,17 @@ const TEX = path.join(SRC, "Textures");
 const OUT = path.join(root, "client/public/maps/classroom");
 const OUT_TEX = path.join(OUT, "textures");
 
-// meshes to ship in the playable map (shell + key furniture)
-const WANT = [
-  "classroom01_8x10x3.5m",
-  "desk01",
-  "chair01",
-  "blackboard01_1",
-  "board01_long",
-  "platform01",
-  "locker01_close",
-  "window01",
-  "door01_A",
-  "clock01",
-];
+// meshes to ship: every mesh referenced by the parsed authored layout (minus the
+// shadow-only proxy), falling back to a small hand-picked set if no layout exists yet.
+const LAYOUT = path.join(root, "client/public/maps/classroom/layout.json");
+let WANT;
+let layoutContent = null;
+try {
+  layoutContent = await fs.readFile(LAYOUT, "utf8");
+  WANT = JSON.parse(layoutContent).meshes.filter((m) => m !== "classroom01_shadow");
+} catch {
+  WANT = ["classroom01_8x10x3.5m", "desk01", "chair01", "blackboard01_1", "platform01", "locker01_close", "window01", "door01_A", "clock01"];
+}
 
 async function listTextures() {
   const files = await fs.readdir(TEX);
@@ -104,6 +102,7 @@ async function main() {
     }
   }
   await fs.writeFile(path.join(OUT, "manifest.json"), JSON.stringify(manifest, null, 2));
+  if (layoutContent) await fs.writeFile(path.join(OUT, "layout.json"), layoutContent); // preserve through the dir wipe
   console.log(`\nmap built: ${Object.keys(manifest.meshes).length} meshes, ${albedoSet.size} albedo + ${normalSet.size} normal textures → ${OUT}`);
 }
 

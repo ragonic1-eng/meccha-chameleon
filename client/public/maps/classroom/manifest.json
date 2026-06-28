@@ -1,5 +1,158 @@
 {
   "meshes": {
+    "attendancebook01_1": {
+      "file": "attendancebook01_1.glb",
+      "materials": {
+        "attendancebook01_1": {
+          "albedo": "attendancebook01_1.jpg",
+          "normal": "attendancebook01_NRM.png"
+        }
+      }
+    },
+    "attendancebook01_2": {
+      "file": "attendancebook01_2.glb",
+      "materials": {
+        "attendancebook01_1": {
+          "albedo": "attendancebook01_1.jpg",
+          "normal": "attendancebook01_NRM.png"
+        }
+      }
+    },
+    "attendancebook01_3": {
+      "file": "attendancebook01_3.glb",
+      "materials": {
+        "attendancebook01_1": {
+          "albedo": "attendancebook01_1.jpg",
+          "normal": "attendancebook01_NRM.png"
+        }
+      }
+    },
+    "attendancebook01_pointer1": {
+      "file": "attendancebook01_pointer1.glb",
+      "materials": {
+        "attendancebook01_1": {
+          "albedo": "attendancebook01_1.jpg",
+          "normal": "attendancebook01_NRM.png"
+        }
+      }
+    },
+    "bag01_2": {
+      "file": "bag01_2.glb",
+      "materials": {
+        "bag01_1": {
+          "albedo": "bag01_1.jpg",
+          "normal": "bag01_NRM.png"
+        }
+      }
+    },
+    "bag01_3": {
+      "file": "bag01_3.glb",
+      "materials": {
+        "bag01_1": {
+          "albedo": "bag01_1.jpg",
+          "normal": "bag01_NRM.png"
+        }
+      }
+    },
+    "blackboard01_2": {
+      "file": "blackboard01_2.glb",
+      "materials": {
+        "blackboard01_1": {
+          "albedo": "blackboard01_1.jpg",
+          "normal": "blackboard01_NRM.png"
+        }
+      }
+    },
+    "book01_a1": {
+      "file": "book01_a1.glb",
+      "materials": {
+        "book01_1": {
+          "albedo": "book01_1.jpg",
+          "normal": null
+        }
+      }
+    },
+    "book01_b1": {
+      "file": "book01_b1.glb",
+      "materials": {
+        "book01_1": {
+          "albedo": "book01_1.jpg",
+          "normal": null
+        }
+      }
+    },
+    "book01_b2": {
+      "file": "book01_b2.glb",
+      "materials": {
+        "book01_1": {
+          "albedo": "book01_1.jpg",
+          "normal": null
+        }
+      }
+    },
+    "book02": {
+      "file": "book02.glb",
+      "materials": {
+        "book02_1": {
+          "albedo": "book02_1.jpg",
+          "normal": "book02_NRM.png"
+        }
+      }
+    },
+    "book03": {
+      "file": "book03.glb",
+      "materials": {
+        "book03_1": {
+          "albedo": "book03_1.jpg",
+          "normal": "book03_NRM.png"
+        }
+      }
+    },
+    "broom01_1": {
+      "file": "broom01_1.glb",
+      "materials": {
+        "broom01_1": {
+          "albedo": "broom01_1.jpg",
+          "normal": "broom01_NRM.png"
+        }
+      }
+    },
+    "broom01_2": {
+      "file": "broom01_2.glb",
+      "materials": {
+        "broom01_1": {
+          "albedo": "broom01_1.jpg",
+          "normal": "broom01_NRM.png"
+        }
+      }
+    },
+    "chair01": {
+      "file": "chair01.glb",
+      "materials": {
+        "chair01_1": {
+          "albedo": "chair01_1.jpg",
+          "normal": "chair01_NRM.png"
+        }
+      }
+    },
+    "chalk01_pink": {
+      "file": "chalk01_pink.glb",
+      "materials": {
+        "chalk01_1": {
+          "albedo": "chalk01_1.jpg",
+          "normal": null
+        }
+      }
+    },
+    "chalk01_white": {
+      "file": "chalk01_white.glb",
+      "materials": {
+        "chalk01_1": {
+          "albedo": "chalk01_1.jpg",
+          "normal": null
+        }
+      }
+    },
     "classroom01_8x10x3.5m": {
       "file": "classroom01_8x10x3.5m.glb",
       "materials": {
@@ -21,6 +174,64 @@
         }
       }
     },
+    "clock01": {
+      "file": "clock01.glb",
+      "materials": {
+        "clock01_1": {
+          "albedo": "clock01_1.jpg",
+          "normal": "clock01_NRM.png"
+        },
+        "clock01_glass": {
+          "albedo": null,
+          "normal": null
+        }
+      }
+    },
+    "counter01_2": {
+      "file": "counter01_2.glb",
+      "materials": {
+        "counter01_1": {
+          "albedo": "counter01_1.jpg",
+          "normal": "counter01_NRM.png"
+        }
+      }
+    },
+    "curtain01_1": {
+      "file": "curtain01_1.glb",
+      "materials": {
+        "curtain01_1": {
+          "albedo": "curtain01_1.jpg",
+          "normal": "curtain01_NRM.png"
+        }
+      }
+    },
+    "curtain01_3": {
+      "file": "curtain01_3.glb",
+      "materials": {
+        "curtain01_1": {
+          "albedo": "curtain01_1.jpg",
+          "normal": "curtain01_NRM.png"
+        }
+      }
+    },
+    "curtain01_rail": {
+      "file": "curtain01_rail.glb",
+      "materials": {
+        "curtain01_1": {
+          "albedo": "curtain01_1.jpg",
+          "normal": "curtain01_NRM.png"
+        }
+      }
+    },
+    "curtain01_winframe": {
+      "file": "curtain01_winframe.glb",
+      "materials": {
+        "curtain01_1": {
+          "albedo": "curtain01_1.jpg",
+          "normal": "curtain01_NRM.png"
+        }
+      }
+    },
     "desk01": {
       "file": "desk01.glb",
       "materials": {
@@ -30,61 +241,12 @@
         }
       }
     },
-    "chair01": {
-      "file": "chair01.glb",
+    "desk02": {
+      "file": "desk02.glb",
       "materials": {
-        "chair01_1": {
-          "albedo": "chair01_1.jpg",
-          "normal": "chair01_NRM.png"
-        }
-      }
-    },
-    "blackboard01_1": {
-      "file": "blackboard01_1.glb",
-      "materials": {
-        "blackboard01_1": {
-          "albedo": "blackboard01_1.jpg",
-          "normal": "blackboard01_NRM.png"
-        }
-      }
-    },
-    "board01_long": {
-      "file": "board01_long.glb",
-      "materials": {
-        "blackboard01_1": {
-          "albedo": "blackboard01_1.jpg",
-          "normal": "blackboard01_NRM.png"
-        }
-      }
-    },
-    "platform01": {
-      "file": "platform01.glb",
-      "materials": {
-        "platform01_1": {
-          "albedo": "platform01_1.jpg",
-          "normal": "platform01_NRM.png"
-        }
-      }
-    },
-    "locker01_close": {
-      "file": "locker01_close.glb",
-      "materials": {
-        "locker01_1": {
-          "albedo": "locker01_1.jpg",
-          "normal": "locker01_NRM.png"
-        }
-      }
-    },
-    "window01": {
-      "file": "window01.glb",
-      "materials": {
-        "window01_1": {
-          "albedo": "window01_1.jpg",
-          "normal": "window01_NRM.png"
-        },
-        "glass01_1": {
-          "albedo": null,
-          "normal": null
+        "desk02_1": {
+          "albedo": "desk02_1.jpg",
+          "normal": "desk02_NRM.png"
         }
       }
     },
@@ -101,16 +263,326 @@
         }
       }
     },
-    "clock01": {
-      "file": "clock01.glb",
+    "door01_B": {
+      "file": "door01_B.glb",
       "materials": {
-        "clock01_1": {
-          "albedo": "clock01_1.jpg",
-          "normal": "clock01_NRM.png"
+        "door01_1": {
+          "albedo": "door01_1.jpg",
+          "normal": "door01_NRM.png"
         },
-        "clock01_glass": {
+        "glass01_1": {
           "albedo": null,
           "normal": null
+        }
+      }
+    },
+    "drink01": {
+      "file": "drink01.glb",
+      "materials": {
+        "drink01_1": {
+          "albedo": "drink01_1.jpg",
+          "normal": null
+        }
+      }
+    },
+    "dustpan01": {
+      "file": "dustpan01.glb",
+      "materials": {
+        "dustpan01_1": {
+          "albedo": "dustpan01_1.jpg",
+          "normal": "dustpan01_NRM.png"
+        }
+      }
+    },
+    "dustpan01_brush": {
+      "file": "dustpan01_brush.glb",
+      "materials": {
+        "dustpan01_1": {
+          "albedo": "dustpan01_1.jpg",
+          "normal": "dustpan01_NRM.png"
+        }
+      }
+    },
+    "dustpan01_hook": {
+      "file": "dustpan01_hook.glb",
+      "materials": {
+        "dustpan01_1": {
+          "albedo": "dustpan01_1.jpg",
+          "normal": "dustpan01_NRM.png"
+        }
+      }
+    },
+    "eraser01": {
+      "file": "eraser01.glb",
+      "materials": {
+        "eraser01_1": {
+          "albedo": "eraser01_1.jpg",
+          "normal": "eraser01_NRM.png"
+        }
+      }
+    },
+    "erasercleaner01": {
+      "file": "erasercleaner01.glb",
+      "materials": {
+        "erasercleaner01_1": {
+          "albedo": "erasercleaner01_1.jpg",
+          "normal": "erasercleaner01_NRM.png"
+        }
+      }
+    },
+    "lamp01_1": {
+      "file": "lamp01_1.glb",
+      "materials": {
+        "lamp01_1": {
+          "albedo": "lamp01_1.jpg",
+          "normal": "lamp01_NRM.png"
+        }
+      }
+    },
+    "lamp02": {
+      "file": "lamp02.glb",
+      "materials": {
+        "lamp02_1": {
+          "albedo": "lamp02_1.jpg",
+          "normal": "lamp02_NRM.png"
+        }
+      }
+    },
+    "locker01_open": {
+      "file": "locker01_open.glb",
+      "materials": {
+        "locker01_1": {
+          "albedo": "locker01_1.jpg",
+          "normal": "locker01_NRM.png"
+        }
+      }
+    },
+    "photo-frame01_1": {
+      "file": "photo-frame01_1.glb",
+      "materials": {
+        "poster-frame01_1": {
+          "albedo": "poster-frame01_1.jpg",
+          "normal": "poster-frame01_NRM.png"
+        }
+      }
+    },
+    "photo-frame01_2": {
+      "file": "photo-frame01_2.glb",
+      "materials": {
+        "poster-frame01_1": {
+          "albedo": "poster-frame01_1.jpg",
+          "normal": "poster-frame01_NRM.png"
+        }
+      }
+    },
+    "platform01": {
+      "file": "platform01.glb",
+      "materials": {
+        "platform01_1": {
+          "albedo": "platform01_1.jpg",
+          "normal": "platform01_NRM.png"
+        }
+      }
+    },
+    "poster01_1": {
+      "file": "poster01_1.glb",
+      "materials": {
+        "poster01_1": {
+          "albedo": "poster01_1.jpg",
+          "normal": null
+        }
+      }
+    },
+    "poster01_2": {
+      "file": "poster01_2.glb",
+      "materials": {
+        "poster01_1": {
+          "albedo": "poster01_1.jpg",
+          "normal": null
+        }
+      }
+    },
+    "poster01_3": {
+      "file": "poster01_3.glb",
+      "materials": {
+        "poster01_1": {
+          "albedo": "poster01_1.jpg",
+          "normal": null
+        }
+      }
+    },
+    "poster02_1": {
+      "file": "poster02_1.glb",
+      "materials": {
+        "poster02_1": {
+          "albedo": "poster02_1.jpg",
+          "normal": null
+        }
+      }
+    },
+    "poster02_2": {
+      "file": "poster02_2.glb",
+      "materials": {
+        "poster02_1": {
+          "albedo": "poster02_1.jpg",
+          "normal": null
+        }
+      }
+    },
+    "poster02_pin": {
+      "file": "poster02_pin.glb",
+      "materials": {
+        "poster02_1": {
+          "albedo": "poster02_1.jpg",
+          "normal": null
+        }
+      }
+    },
+    "projector01": {
+      "file": "projector01.glb",
+      "materials": {
+        "projector01_1": {
+          "albedo": "projector01_1.jpg",
+          "normal": "projector01_NRM.png"
+        }
+      }
+    },
+    "ruler01_compass": {
+      "file": "ruler01_compass.glb",
+      "materials": {
+        "ruler01_1": {
+          "albedo": "ruler01_1.jpg",
+          "normal": "ruler01_NRM.png"
+        }
+      }
+    },
+    "ruler01_protractor": {
+      "file": "ruler01_protractor.glb",
+      "materials": {
+        "ruler01_1": {
+          "albedo": "ruler01_1.jpg",
+          "normal": "ruler01_NRM.png"
+        }
+      }
+    },
+    "ruler01_setsquare1": {
+      "file": "ruler01_setsquare1.glb",
+      "materials": {
+        "ruler01_1": {
+          "albedo": "ruler01_1.jpg",
+          "normal": "ruler01_NRM.png"
+        }
+      }
+    },
+    "ruler01_setsquare2": {
+      "file": "ruler01_setsquare2.glb",
+      "materials": {
+        "ruler01_1": {
+          "albedo": "ruler01_1.jpg",
+          "normal": "ruler01_NRM.png"
+        }
+      }
+    },
+    "screen01_1": {
+      "file": "screen01_1.glb",
+      "materials": {
+        "screen01_1": {
+          "albedo": "screen01_1.jpg",
+          "normal": "screen01_NRM.png"
+        }
+      }
+    },
+    "screen01_2": {
+      "file": "screen01_2.glb",
+      "materials": {
+        "screen01_1": {
+          "albedo": "screen01_1.jpg",
+          "normal": "screen01_NRM.png"
+        }
+      }
+    },
+    "screen01_hook": {
+      "file": "screen01_hook.glb",
+      "materials": {
+        "screen01_1": {
+          "albedo": "screen01_1.jpg",
+          "normal": "screen01_NRM.png"
+        }
+      }
+    },
+    "shelf01": {
+      "file": "shelf01.glb",
+      "materials": {
+        "shelf01_1": {
+          "albedo": "shelf01_1.jpg",
+          "normal": "shelf01_NRM.png"
+        }
+      }
+    },
+    "speaker01_2": {
+      "file": "speaker01_2.glb",
+      "materials": {
+        "speaker01_1": {
+          "albedo": "speaker01_1.jpg",
+          "normal": "speaker01_NRM.png"
+        }
+      }
+    },
+    "switch01_1": {
+      "file": "switch01_1.glb",
+      "materials": {
+        "switch01_1": {
+          "albedo": "switch01_1.jpg",
+          "normal": "switch01_NRM.png"
+        }
+      }
+    },
+    "switch01_2": {
+      "file": "switch01_2.glb",
+      "materials": {
+        "switch01_1": {
+          "albedo": "switch01_1.jpg",
+          "normal": "switch01_NRM.png"
+        }
+      }
+    },
+    "trashbox01": {
+      "file": "trashbox01.glb",
+      "materials": {
+        "trashbox01_1": {
+          "albedo": "trashbox01_1.jpg",
+          "normal": "trashbox01_NRM.png"
+        }
+      }
+    },
+    "window01": {
+      "file": "window01.glb",
+      "materials": {
+        "window01_1": {
+          "albedo": "window01_1.jpg",
+          "normal": "window01_NRM.png"
+        },
+        "glass01_1": {
+          "albedo": null,
+          "normal": null
+        }
+      }
+    },
+    "writing_implements01_eraser": {
+      "file": "writing_implements01_eraser.glb",
+      "materials": {
+        "writing_implements01_1": {
+          "albedo": "writing_implements01_1.jpg",
+          "normal": "writing_implements01_NRM.png"
+        }
+      }
+    },
+    "writing_implements01_pen": {
+      "file": "writing_implements01_pen.glb",
+      "materials": {
+        "writing_implements01_1": {
+          "albedo": "writing_implements01_1.jpg",
+          "normal": "writing_implements01_NRM.png"
         }
       }
     }
