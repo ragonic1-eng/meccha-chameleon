@@ -1,0 +1,31 @@
+{
+  "name": "meccha-chameleon-web",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Mobile web hide-and-seek camouflage game (Meccha Chameleon clone)",
+  "type": "module",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -n server,client -c green,cyan \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "npm -w @mcc/server run dev",
+    "dev:client": "npm -w @mcc/client run dev",
+    "build": "npm -w @mcc/client run build",
+    "start": "npm -w @mcc/server run start",
+    "map:extract": "python tools/extract_unitypackage.py",
+    "map:build": "node tools/build_map.mjs",
+    "icons": "node tools/gen_icons.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "optionalDependencies": {
+    "fbx2gltf": "^0.9.7-p1",
+    "sharp": "^0.35.2"
+  }
+}

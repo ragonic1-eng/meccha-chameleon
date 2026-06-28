@@ -1,0 +1,118 @@
+{
+  "meshes": {
+    "classroom01_8x10x3.5m": {
+      "file": "classroom01_8x10x3.5m.glb",
+      "materials": {
+        "classroom_wall01": {
+          "albedo": "classroom_wall01_1.jpg",
+          "normal": "classroom_wall01_NRM.png"
+        },
+        "classroom_ceiling01": {
+          "albedo": null,
+          "normal": null
+        },
+        "classroom_floor01_1": {
+          "albedo": "classroom_floor01_1.jpg",
+          "normal": "classroom_floor01_NRM.png"
+        },
+        "classroom_wall02": {
+          "albedo": "classroom_wall02_1.jpg",
+          "normal": "classroom_wall02_NRM.png"
+        }
+      }
+    },
+    "desk01": {
+      "file": "desk01.glb",
+      "materials": {
+        "desk01_1": {
+          "albedo": "desk01_1.jpg",
+          "normal": "desk01_NRM.png"
+        }
+      }
+    },
+    "chair01": {
+      "file": "chair01.glb",
+      "materials": {
+        "chair01_1": {
+          "albedo": "chair01_1.jpg",
+          "normal": "chair01_NRM.png"
+        }
+      }
+    },
+    "blackboard01_1": {
+      "file": "blackboard01_1.glb",
+      "materials": {
+        "blackboard01_1": {
+          "albedo": "blackboard01_1.jpg",
+          "normal": "blackboard01_NRM.png"
+        }
+      }
+    },
+    "board01_long": {
+      "file": "board01_long.glb",
+      "materials": {
+        "blackboard01_1": {
+          "albedo": "blackboard01_1.jpg",
+          "normal": "blackboard01_NRM.png"
+        }
+      }
+    },
+    "platform01": {
+      "file": "platform01.glb",
+      "materials": {
+        "platform01_1": {
+          "albedo": "platform01_1.jpg",
+          "normal": "platform01_NRM.png"
+        }
+      }
+    },
+    "locker01_close": {
+      "file": "locker01_close.glb",
+      "materials": {
+        "locker01_1": {
+          "albedo": "locker01_1.jpg",
+          "normal": "locker01_NRM.png"
+        }
+      }
+    },
+    "window01": {
+      "file": "window01.glb",
+      "materials": {
+        "window01_1": {
+          "albedo": "window01_1.jpg",
+          "normal": "window01_NRM.png"
+        },
+        "glass01_1": {
+          "albedo": null,
+          "normal": null
+        }
+      }
+    },
+    "door01_A": {
+      "file": "door01_A.glb",
+      "materials": {
+        "door01_1": {
+          "albedo": "door01_1.jpg",
+          "normal": "door01_NRM.png"
+        },
+        "glass01_1": {
+          "albedo": null,
+          "normal": null
+        }
+      }
+    },
+    "clock01": {
+      "file": "clock01.glb",
+      "materials": {
+        "clock01_1": {
+          "albedo": "clock01_1.jpg",
+          "normal": "clock01_NRM.png"
+        },
+        "clock01_glass": {
+          "albedo": null,
+          "normal": null
+        }
+      }
+    }
+  }
+}

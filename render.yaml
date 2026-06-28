@@ -1,0 +1,13 @@
+# Render.com blueprint — one web service serving the client + Colyseus game server.
+# Deploy: push this repo to GitHub, then New → Blueprint on render.com and pick it.
+services:
+  - type: web
+    name: meccha-chameleon
+    runtime: node
+    plan: free
+    buildCommand: npm install --omit=optional && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
