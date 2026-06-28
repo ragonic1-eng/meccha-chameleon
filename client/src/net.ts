@@ -7,16 +7,27 @@ export interface NetCallbacks {
   onError?: (msg: string) => void;
 }
 
-/** Colyseus websocket endpoint for dev (Vite :5173 → server :2567) and prod (same origin). */
+// Optional explicit game-server URL (set VITE_GAME_SERVER at build time when the client is
+// hosted separately from the server, e.g. front-end on Vercel + server on Railway/Render).
+const GAME_SERVER = (import.meta.env.VITE_GAME_SERVER as string | undefined)?.replace(/\/$/, "");
+
+/** True when a separate game server is configured (front-end-only hosts like Vercel need this). */
+export function hasConfiguredServer(): boolean {
+  return !!GAME_SERVER;
+}
+
+/** Colyseus websocket endpoint. */
 export function serverEndpoint(): string {
+  if (GAME_SERVER) return GAME_SERVER.replace(/^http/, "ws");
   const loc = window.location;
   const proto = loc.protocol === "https:" ? "wss" : "ws";
   if (loc.port === "5173") return `${proto}://${loc.hostname}:2567`;
   return `${proto}://${loc.host}`;
 }
 
-/** HTTP endpoint (code lookup, health) — same host as the server. */
+/** HTTP endpoint (code lookup, health). */
 export function httpEndpoint(): string {
+  if (GAME_SERVER) return GAME_SERVER.replace(/^ws/, "http");
   const loc = window.location;
   if (loc.port === "5173") return `${loc.protocol}//${loc.hostname}:2567`;
   return `${loc.protocol}//${loc.host}`;
@@ -38,15 +49,29 @@ export class Net {
 
   /** Host: create a fresh room and become its host. */
   async create(name: string): Promise<Room> {
-    return this.bind(await this.client.create(ROOM_NAME, { name }));
+    try {
+      return this.bind(await this.client.create(ROOM_NAME, { name }));
+    } catch {
+      throw new Error("Can't reach the game server. Is it running?");
+    }
   }
 
   /** Joiner: resolve a 6-char code to a roomId, then join it. */
   async joinByCode(name: string, code: string): Promise<Room> {
-    const res = await fetch(`${httpEndpoint()}/api/code/${encodeURIComponent(code.trim())}`);
-    if (!res.ok) throw new Error("Room not found — check the code.");
+    let res: Response;
+    try {
+      res = await fetch(`${httpEndpoint()}/api/code/${encodeURIComponent(code.trim())}`);
+    } catch {
+      throw new Error("Can't reach the game server. Is it running?");
+    }
+    if (res.status === 404) throw new Error("Room not found — check the code.");
+    if (!res.ok) throw new Error("Can't reach the game server. Is it running?");
     const { roomId } = (await res.json()) as { roomId: string };
-    return this.bind(await this.client.joinById(roomId, { name }));
+    try {
+      return this.bind(await this.client.joinById(roomId, { name }));
+    } catch {
+      throw new Error("Couldn't join — the room may have closed.");
+    }
   }
 
   private bind(room: Room): Room {
