@@ -3,11 +3,13 @@ import type { PaintStroke } from "@shared/types";
 import { PaintBody } from "./paintbody";
 
 const MAX_STROKE_PTS = 48; // flush long strokes so remotes update mid-drag
+const ERASE_COLOR = "#e9ece6"; // the body's blank base — "erasing" paints back to it
 
 interface PainterOpts {
   onStroke: (s: PaintStroke) => void;
   onSample: (color: string) => void;
   setOverlay: (obj: THREE.Object3D | null) => void;
+  sampleScreen: (clientX: number, clientY: number) => string | null;
 }
 
 /** Local hider's camouflage tool: self-view orbit + raycast brush + eyedropper. */
@@ -15,11 +17,11 @@ export class Painter {
   readonly body = new PaintBody();
   brush = { color: "#6f8f4d", radius: 0.05, alpha: 0.95 };
   eyedropper = false;
+  eraser = false;
   active = false;
 
   private orbitYaw = 0;
-  private orbitPitch = 0.22;
-  private radius = 2.1;
+  private orbitPitch = 0.12;
   private center = new THREE.Vector3();
   private lookT = new THREE.Vector3();
 
@@ -30,6 +32,10 @@ export class Painter {
   private last = new THREE.Vector2();
   private lastUV: THREE.Vector2 | null = null;
   private cur: number[] = [];
+  // params captured at the start of the current stroke (so erase/colour can't change mid-drag)
+  private curColor = "";
+  private curAlpha = 1;
+  private curRadius = 0.05;
   private sampleCache = new WeakMap<THREE.Texture, ImageData>();
 
   constructor(
@@ -72,16 +78,38 @@ export class Painter {
     this.body.clear();
   }
 
+  /** Toggle erase mode — strokes paint the blank base colour back over the camo. */
+  setEraser(v: boolean) {
+    this.eraser = v;
+    if (v) this.eyedropper = false;
+  }
+
+  /** Flood the whole body with the current brush colour (a base coat), replicated to seekers. */
+  fill() {
+    this.body.fillColor(this.brush.color);
+    this.opts.onStroke({ id: "", op: "fill", pts: [0, 0], color: this.brush.color, radius: this.brush.radius, alpha: 1 });
+  }
+
+  /** Spin the self-view figure (used by the on-screen rotate buttons). */
+  rotate(dyaw: number) {
+    this.orbitYaw += dyaw;
+  }
+
   /** position the self-view camera each frame */
   update() {
     if (!this.active) return;
+    // Tall/narrow phones (e.g. S25 Ultra) need the figure pulled back + lifted so the whole
+    // body sits in the UPPER part of the screen, clear of the bottom palette. Vertical FOV is
+    // fixed, so on a portrait aspect we zoom out and look lower to push the figure up.
+    const portrait = this.camera.aspect < 0.82;
+    const radius = portrait ? 1.95 : 1.55; // a bit closer = bigger, easier paint target
+    const lookYOff = portrait ? -0.58 : -0.32;
     const cp = this.orbitPitch;
-    const x = this.center.x + this.radius * Math.cos(cp) * Math.sin(this.orbitYaw);
-    const y = this.center.y + this.radius * Math.sin(cp);
-    const z = this.center.z + this.radius * Math.cos(cp) * Math.cos(this.orbitYaw);
+    const x = this.center.x + radius * Math.cos(cp) * Math.sin(this.orbitYaw);
+    const y = this.center.y + radius * Math.sin(cp);
+    const z = this.center.z + radius * Math.cos(cp) * Math.cos(this.orbitYaw);
     this.camera.position.set(x, y, z);
-    // look below the body so it frames in the upper half, clear of the bottom palette
-    this.lookT.copy(this.center).setY(this.center.y - 0.45);
+    this.lookT.copy(this.center).setY(this.center.y + lookYOff);
     this.camera.lookAt(this.lookT);
   }
 
@@ -102,16 +130,15 @@ export class Painter {
     this.setNDC(e);
 
     if (this.eyedropper) {
-      this.ray.setFromCamera(this.ndc, this.camera);
-      const hits = this.ray.intersectObjects(this.scene.children, true);
-      const hit = hits.find((h) => (h.object as THREE.Mesh).isMesh);
-      if (hit) {
-        const col = this.sampleColor(hit);
-        if (col) {
-          this.brush.color = col;
-          this.opts.onSample(col);
-        }
+      // sample the exact rendered pixel under the finger (works on the body OR the room) —
+      // fall back to raycast+texture sampling if the framebuffer read fails
+      let col = this.opts.sampleScreen(e.clientX, e.clientY);
+      if (!col) {
+        this.ray.setFromCamera(this.ndc, this.camera);
+        const hit = this.ray.intersectObjects(this.scene.children, true).find((h) => (h.object as THREE.Mesh).isMesh);
+        if (hit) col = this.sampleColor(hit);
       }
+      if (col) { this.brush.color = col; this.opts.onSample(col); }
       this.eyedropper = false;
       this.mode = "none";
       return;
@@ -120,9 +147,12 @@ export class Painter {
     const hit = this.hitBody();
     if (hit && hit.uv) {
       this.mode = "paint";
+      this.curColor = this.eraser ? ERASE_COLOR : this.brush.color;
+      this.curAlpha = this.eraser ? 1 : this.brush.alpha;
+      this.curRadius = this.brush.radius;
       this.lastUV = hit.uv.clone();
       this.cur = [hit.uv.x, hit.uv.y];
-      this.body.segment(hit.uv.x, hit.uv.y, hit.uv.x, hit.uv.y, this.brush.color, this.brush.radius, this.brush.alpha);
+      this.body.segment(hit.uv.x, hit.uv.y, hit.uv.x, hit.uv.y, this.curColor, this.curRadius, this.curAlpha);
     } else {
       this.mode = "orbit";
       this.last.set(e.clientX, e.clientY);
@@ -135,7 +165,7 @@ export class Painter {
     if (this.mode === "paint") {
       const hit = this.hitBody();
       if (hit && hit.uv && this.lastUV) {
-        this.body.segment(this.lastUV.x, this.lastUV.y, hit.uv.x, hit.uv.y, this.brush.color, this.brush.radius, this.brush.alpha);
+        this.body.segment(this.lastUV.x, this.lastUV.y, hit.uv.x, hit.uv.y, this.curColor, this.curRadius, this.curAlpha);
         this.cur.push(hit.uv.x, hit.uv.y);
         this.lastUV.copy(hit.uv);
         if (this.cur.length >= MAX_STROKE_PTS * 2) this.flush(true);
@@ -159,7 +189,7 @@ export class Painter {
 
   private flush(continuing: boolean) {
     if (this.cur.length >= 2) {
-      this.opts.onStroke({ id: "", pts: this.cur.slice(), color: this.brush.color, radius: this.brush.radius, alpha: this.brush.alpha });
+      this.opts.onStroke({ id: "", pts: this.cur.slice(), color: this.curColor, radius: this.curRadius, alpha: this.curAlpha });
     }
     // keep painting from the last point if this was a mid-stroke flush
     this.cur = continuing && this.lastUV ? [this.lastUV.x, this.lastUV.y] : [];

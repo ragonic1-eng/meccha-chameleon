@@ -15,13 +15,15 @@ export class GameScene {
   private mapGroup?: THREE.Group;
   private sun!: THREE.DirectionalLight;
   private hemi!: THREE.HemisphereLight;
+  private ambient?: THREE.AmbientLight;
   // a second scene drawn on top (depth cleared) for the camouflage self-view figure,
   // so furniture never occludes it while self-occlusion stays correct
   private overlay = new THREE.Scene();
   private overlayObj?: THREE.Object3D;
 
   constructor(canvas: HTMLCanvasElement) {
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+    // preserveDrawingBuffer lets the eyedropper read back the exact rendered pixel under a tap
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, preserveDrawingBuffer: true });
     this.renderer.setClearColor(0x10141a, 1);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -124,20 +126,44 @@ export class GameScene {
     }
   }
 
-  /** Swap the placeholder room for the loaded classroom map. */
+  /** Swap the placeholder room for the loaded multi-room school. */
   setMap(group: THREE.Group) {
     this.scene.remove(this.placeholder);
     if (this.mapGroup) this.scene.remove(this.mapGroup);
     this.mapGroup = group;
     this.scene.add(group);
-    // brighter, cooler interior lighting for the textured room
-    this.hemi.intensity = 1.05;
-    this.sun.intensity = 1.25;
-    this.scene.fog = new THREE.Fog(0x12161a, 16, 36);
+    // Even, flat, mobile-friendly interior light across the whole building (no big
+    // shadow map — the building is ~20×17m and is fully ceilinged). Flat light also
+    // helps the camouflage gameplay (colour matching is easier to read).
+    this.hemi.intensity = 1.3;
+    this.sun.intensity = 0.6;
+    this.sun.castShadow = false;
+    this.sun.position.set(6, 12, 5);
+    if (!this.ambient) {
+      this.ambient = new THREE.AmbientLight(0xfff3df, 0.4);
+      this.scene.add(this.ambient);
+    }
+    // light indoor haze: nearby stays clear, the far end of the bigger building gently fades
+    this.scene.fog = new THREE.Fog(0xdfe3e0, 20, 60);
+    this.renderer.setClearColor(0xdfe3e0, 1);
   }
 
   setFrameCallback(cb: (dt: number) => void) {
     this.onFrame = cb;
+  }
+
+  /** Read the exact rendered colour under a screen point (for the eyedropper). Returns #rrggbb. */
+  sampleScreenColor(clientX: number, clientY: number): string | null {
+    const r = this.renderer.domElement.getBoundingClientRect();
+    const dpr = this.renderer.getPixelRatio();
+    const x = Math.round((clientX - r.left) * dpr);
+    const y = Math.round((r.height - (clientY - r.top)) * dpr); // GL y is bottom-up
+    const gl = this.renderer.getContext();
+    const px = new Uint8Array(4);
+    try { gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); } catch { return null; }
+    if (px[3] === 0) return null;
+    const hx = (v: number) => v.toString(16).padStart(2, "0");
+    return `#${hx(px[0])}${hx(px[1])}${hx(px[2])}`;
   }
 
   start() {
