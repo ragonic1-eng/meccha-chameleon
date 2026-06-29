@@ -33,6 +33,11 @@ const PRESETS: Record<string, PoseDef> = {
     rootY: -0.12,
     j: { spine: [40, 0, 0], hpR: [96, 0, 0], knR: [-125, 0, 0], hpL: [96, 0, 0], knL: [-125, 0, 0], shR: [-46, 0, 12], elR: [-95, 0, 0], shL: [-46, 0, -12], elL: [-95, 0, 0] },
   },
+  // climbing (driven by the networked `surf`, not user-selectable). "wallclimb" = upright,
+  // arms reaching overhead + legs spread (gecko on a wall). "ceilingcrawl" pitches the whole
+  // figure forward 90° so it lies flat, face toward the floor, limbs splayed crawling.
+  wallclimb: { j: { shR: [-150, 0, -16], shL: [-150, 0, 16], elR: [-26, 0, 0], elL: [-26, 0, 0], hpR: [0, 0, -20], hpL: [0, 0, 20], knR: [26, 0, 0], knL: [26, 0, 0] } },
+  ceilingcrawl: { rootRot: [90 * D, 0, 0], j: { shR: [-120, 0, -18], shL: [-120, 0, 18], elR: [-20, 0, 0], elL: [-20, 0, 0], hpR: [0, 0, -24], hpL: [0, 0, 24], knR: [24, 0, 0], knL: [24, 0, 0] } },
 };
 
 /**
@@ -125,8 +130,17 @@ export class PaintBody {
 
   // ---- painting (operates on the shared atlas canvas in UV space) ----
   clear() {
+    this.fillCanvas(BASE_COLOR);
+  }
+
+  /** Coat the whole body in one colour (a base layer to paint patterns on top of). */
+  fillColor(color: string) {
+    this.fillCanvas(color);
+  }
+
+  private fillCanvas(color: string) {
     this.ctx.globalAlpha = 1;
-    this.ctx.fillStyle = BASE_COLOR;
+    this.ctx.fillStyle = color;
     this.ctx.fillRect(0, 0, TEX, TEX);
     if (this.texture) this.texture.needsUpdate = true;
   }
@@ -155,6 +169,7 @@ export class PaintBody {
   }
 
   applyStroke(s: PaintStroke) {
+    if (s.op === "fill") { this.fillColor(s.color); return; }
     const p = s.pts;
     if (p.length < 2) return;
     if (p.length === 2) this.dab(p[0], p[1], s.color, s.radius, s.alpha);

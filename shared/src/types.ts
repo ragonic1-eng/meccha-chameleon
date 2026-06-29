@@ -2,6 +2,8 @@
 
 export type Phase = "lobby" | "prep" | "hunt" | "results";
 export type Role = "unassigned" | "seeker" | "hider";
+/** A player's lobby preference for which role they want next match. */
+export type RolePref = "auto" | "seeker" | "hider";
 export type GameMode = "normal" | "infection" | "double";
 
 /** The avatar poses (white-figure poses from Meccha Chameleon). */
@@ -55,9 +57,14 @@ export const C2S = {
   SetName: "c:name",
   SetReady: "c:ready",
   SetMode: "c:mode",
+  SetHideTime: "c:hidetime",
+  SetRolePref: "c:rolepref",
+  AddBot: "c:addbot",
+  RemoveBot: "c:removebot",
   StartGame: "c:start",
   Move: "c:move",
   Tag: "c:tag",
+  Shoot: "c:shoot",
   PaintStroke: "c:paint",
   PaintClear: "c:paintClear",
   PaintSync: "c:paintSync",
@@ -71,6 +78,7 @@ export const S2C = {
   PaintStroke: "s:paint",
   PaintClear: "s:paintClear",
   Tagged: "s:tagged",
+  Shot: "s:shot",
   Eliminated: "s:eliminated",
   GameOver: "s:gameover",
   Whistle: "s:whistle",
@@ -89,6 +97,8 @@ export interface PaintStroke {
   radius: number;
   /** 0..1 opacity */
   alpha: number;
+  /** optional op: "fill" coats the whole body in `color` (a base layer). Omitted = normal brush. */
+  op?: "fill";
 }
 
 export interface MoveInput {
@@ -97,4 +107,26 @@ export interface MoveInput {
   z: number;
   ry: number; // yaw
   pose?: Pose;
+  surf?: string; // climbing surface: "floor" | "wall" | "ceiling"
+}
+
+/** Host-configurable hide (prep) duration bounds, seconds. */
+export const HIDE_SEC_MIN = 60;
+export const HIDE_SEC_MAX = 180;
+export const HIDE_SEC_DEFAULT = 90;
+
+/** Seeker fires the ink blaster: a ray from the eye (o) along a normalized direction (d). */
+export interface ShootInput {
+  ox: number; oy: number; oz: number;
+  dx: number; dy: number; dz: number;
+}
+
+/** Broadcast of a fired shot so every client can render the rainbow-ink streak + splat.
+ *  hitId is "" on a miss; (hx,hy,hz) is the impact point. */
+export interface ShotEvent {
+  by: string;
+  ox: number; oy: number; oz: number;
+  dx: number; dy: number; dz: number;
+  hitId: string;
+  hx: number; hy: number; hz: number;
 }
